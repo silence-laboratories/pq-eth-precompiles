@@ -26,7 +26,7 @@ fi
 if docker image inspect erigon-ntt:latest >/dev/null 2>&1; then
     echo "── Launching Kurtosis devnet (falcon-devnet)..."
     kurtosis enclave rm -f falcon-devnet 2>/dev/null || true
-    kurtosis run --enclave falcon-devnet github.com/ethpandaops/ethereum-package \
+    kurtosis run --enclave falcon-devnet github.com/ethpandaops/ethereum-package@5.0.1 \
         --args-file "$ARGS_FILE" || echo "WARNING: kurtosis run failed"
 
     RPC_URL=$(kurtosis port print falcon-devnet el-1-erigon-lighthouse rpc 2>/dev/null || true)
