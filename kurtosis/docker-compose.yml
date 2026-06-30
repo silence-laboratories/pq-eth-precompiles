@@ -1,0 +1,11 @@
+services:
+  devnet:
+    build: .
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    network_mode: host
+    privileged: true
+    restart: unless-stopped
+    labels:
+      - "traefik.http.services.http-0-ynd5qiiwxt4l1xcshlli1qxr.loadbalancer.server.url=http://host.docker.internal:8545"
+      - "traefik.http.services.https-0-ynd5qiiwxt4l1xcshlli1qxr.loadbalancer.server.url=http://host.docker.internal:8545"
