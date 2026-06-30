@@ -24,11 +24,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Checkout erigon (silence-laboratories fork)
+      - name: Checkout erigon (Giulio2002 docker_pq-precompiles)
         uses: actions/checkout@v4
         with:
-          repository: silence-laboratories/erigon
-          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: Giulio2002/erigon
+          ref: docker_pq-precompiles
 
       - name: Build and push erigon-ntt
         uses: docker/build-push-action@v5
