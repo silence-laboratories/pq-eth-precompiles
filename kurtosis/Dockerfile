@@ -3,7 +3,7 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y \
-    curl bash ca-certificates gnupg lsb-release \
+    curl bash ca-certificates gnupg lsb-release socat \
     && rm -rf /var/lib/apt/lists/*
 
 # Docker CLI only (uses host socket via volume mount)
