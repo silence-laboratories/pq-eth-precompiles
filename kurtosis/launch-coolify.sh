@@ -5,6 +5,11 @@ ERIGON_IMAGE="${ERIGON_IMAGE:-ghcr.io/silence-laboratories/erigon-ntt:latest}"
 ARGS_FILE="/app/devnet/network_params.yaml"
 EXPOSED_RPC_PORT="${RPC_PORT:-8545}"
 
+if [ -n "${GHCR_TOKEN:-}" ]; then
+    echo "── Logging in to ghcr.io..."
+    echo "$GHCR_TOKEN" | docker login ghcr.io -u Rhonstin --password-stdin
+fi
+
 echo "── Pulling Erigon image: $ERIGON_IMAGE"
 docker pull "$ERIGON_IMAGE"
 docker tag "$ERIGON_IMAGE" erigon-ntt:latest
