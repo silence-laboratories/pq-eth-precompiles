@@ -27,9 +27,10 @@ if docker image inspect erigon-ntt:latest >/dev/null 2>&1; then
     echo "── Launching Kurtosis devnet (falcon-devnet)..."
     kurtosis enclave rm -f falcon-devnet 2>/dev/null || true
     kurtosis run --enclave falcon-devnet github.com/ethpandaops/ethereum-package@5.0.1 \
-        --args-file "$ARGS_FILE" || echo "WARNING: kurtosis run failed"
+        --args-file "$ARGS_FILE" || echo "WARNING: kurtosis run exited non-zero"
 
-    RPC_URL=$(kurtosis port print falcon-devnet el-1-erigon-lighthouse rpc 2>/dev/null || true)
+    # Port name in ethereum-package 5.0.1 erigon launcher is "ws-rpc" (not "rpc")
+    RPC_URL=$(kurtosis port print falcon-devnet el-1-erigon-lighthouse ws-rpc 2>/dev/null || true)
     KURTOSIS_PORT=$(echo "$RPC_URL" | grep -oE '[0-9]+$' || true)
 
     echo ""
@@ -43,11 +44,13 @@ if docker image inspect erigon-ntt:latest >/dev/null 2>&1; then
         echo "── Proxying 0.0.0.0:$EXPOSED_RPC_PORT → 127.0.0.1:$KURTOSIS_PORT"
         socat TCP-LISTEN:"$EXPOSED_RPC_PORT",fork,reuseaddr TCP:127.0.0.1:"$KURTOSIS_PORT" &
     else
-        echo "WARNING: could not determine Kurtosis RPC port — devnet not proxied"
+        echo "WARNING: could not determine Kurtosis ws-rpc port — devnet not proxied"
+        echo "── Enclave services:"
+        kurtosis enclave inspect falcon-devnet 2>/dev/null || true
     fi
 else
     echo "ERROR: erigon-ntt image unavailable. Devnet NOT started."
-    echo "Fix: make GHCR package public or provide GHCR_TOKEN with read:packages scope."
+    echo "Fix: provide GHCR_TOKEN with read:packages scope."
 fi
 
 echo "── Container alive for debugging. Check logs above for errors."
