@@ -13,11 +13,10 @@ RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /
     apt-get update && apt-get install -y docker-ce-cli && \
     rm -rf /var/lib/apt/lists/*
 
-# Kurtosis CLI
-RUN KURTOSIS_VERSION=$(curl -s https://api.github.com/repos/kurtosis-tech/kurtosis/releases/latest \
-    | grep -m1 '"tag_name"' | cut -d'"' -f4) && \
-    curl -sSL "https://github.com/kurtosis-tech/kurtosis/releases/download/${KURTOSIS_VERSION}/kurtosis_linux_amd64.tar.gz" \
-    | tar -xz -C /usr/local/bin && \
+# Kurtosis CLI via official apt repo
+RUN echo "deb [trusted=yes] https://apt.fury.io/kurtosis-tech/ /" > /etc/apt/sources.list.d/kurtosis.list && \
+    apt-get update && apt-get install -y kurtosis-cli && \
+    rm -rf /var/lib/apt/lists/* && \
     kurtosis version
 
 COPY devnet /app/devnet
