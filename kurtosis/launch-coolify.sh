@@ -44,23 +44,49 @@ if docker image inspect erigon-ntt:latest >/dev/null 2>&1; then
         echo "── Proxying 0.0.0.0:$EXPOSED_RPC_PORT → 127.0.0.1:$KURTOSIS_PORT"
         socat TCP-LISTEN:"$EXPOSED_RPC_PORT",fork,reuseaddr TCP:127.0.0.1:"$KURTOSIS_PORT" &
 
-        # Traefik with providers.docker.network=coolify only routes to containers
-        # that have an IP in the coolify network. host-mode containers have no such
-        # IP, so Traefik returns "no available server". Fix: spawn a sidecar in the
-        # coolify network that proxies to this container's socat (0.0.0.0:8545).
-        echo "── Starting rpc-proxy in coolify Docker network for Traefik routing..."
+        # Traefik Docker provider falls back to 127.0.0.1 for host-mode containers,
+        # which is Traefik's own loopback — unreachable. Instead, use Traefik's file
+        # provider (/data/coolify/proxy/dynamic/ is watched by Traefik with --providers.file).
+        # Traefik has extra_hosts: host.docker.internal:host-gateway, so it CAN reach
+        # the host's port 8545 (where socat is listening on 0.0.0.0).
+        echo "── Writing Traefik file provider config (priority 200 overrides Docker provider)..."
         docker rm -f pq-rpc-proxy 2>/dev/null || true
-        docker run -d \
-            --name pq-rpc-proxy \
-            --restart unless-stopped \
-            --network coolify \
-            --add-host "host.docker.internal:host-gateway" \
-            --label "traefik.enable=true" \
-            --label "traefik.http.services.http-0-ynd5qiiwxt4l1xcshlli1qxr.loadbalancer.server.port=8545" \
-            --label "traefik.http.services.https-0-ynd5qiiwxt4l1xcshlli1qxr.loadbalancer.server.port=8545" \
-            alpine/socat \
-            TCP-LISTEN:8545,fork,reuseaddr "TCP:host.docker.internal:$EXPOSED_RPC_PORT" \
-            || echo "WARNING: rpc-proxy failed to start (coolify network may not exist or alpine/socat unavailable)"
+        docker run --rm -i \
+            -v /data/coolify/proxy:/traefik-proxy \
+            alpine sh << 'DOCKEREOF' || echo "WARNING: Failed to write Traefik file config"
+mkdir -p /traefik-proxy/dynamic
+cat > /traefik-proxy/dynamic/pq-devnet.yaml << 'YAMLEOF'
+http:
+  middlewares:
+    pq-gzip:
+      compress: {}
+    pq-redirect-to-https:
+      redirectScheme:
+        scheme: https
+        permanent: true
+  routers:
+    pq-devnet-https:
+      rule: "Host(`ynd5qiiwxt4l1xcshlli1qxr.demo.silencelaboratories.com`)"
+      entryPoints: [https]
+      service: pq-devnet
+      tls:
+        certResolver: letsencrypt
+      middlewares: [pq-gzip]
+      priority: 200
+    pq-devnet-http:
+      rule: "Host(`ynd5qiiwxt4l1xcshlli1qxr.demo.silencelaboratories.com`)"
+      entryPoints: [http]
+      service: pq-devnet
+      middlewares: [pq-redirect-to-https]
+      priority: 200
+  services:
+    pq-devnet:
+      loadBalancer:
+        servers:
+          - url: http://host.docker.internal:8545
+YAMLEOF
+echo "Traefik file config written."
+DOCKEREOF
     else
         echo "WARNING: could not determine Kurtosis ws-rpc port — devnet not proxied"
         echo "── Enclave services:"
