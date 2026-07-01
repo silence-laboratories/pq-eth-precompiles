@@ -43,6 +43,24 @@ if docker image inspect erigon-ntt:latest >/dev/null 2>&1; then
     if [ -n "$KURTOSIS_PORT" ]; then
         echo "── Proxying 0.0.0.0:$EXPOSED_RPC_PORT → 127.0.0.1:$KURTOSIS_PORT"
         socat TCP-LISTEN:"$EXPOSED_RPC_PORT",fork,reuseaddr TCP:127.0.0.1:"$KURTOSIS_PORT" &
+
+        # Traefik with providers.docker.network=coolify only routes to containers
+        # that have an IP in the coolify network. host-mode containers have no such
+        # IP, so Traefik returns "no available server". Fix: spawn a sidecar in the
+        # coolify network that proxies to this container's socat (0.0.0.0:8545).
+        echo "── Starting rpc-proxy in coolify Docker network for Traefik routing..."
+        docker rm -f pq-rpc-proxy 2>/dev/null || true
+        docker run -d \
+            --name pq-rpc-proxy \
+            --restart unless-stopped \
+            --network coolify \
+            --add-host "host.docker.internal:host-gateway" \
+            --label "traefik.enable=true" \
+            --label "traefik.http.services.http-0-ynd5qiiwxt4l1xcshlli1qxr.loadbalancer.server.port=8545" \
+            --label "traefik.http.services.https-0-ynd5qiiwxt4l1xcshlli1qxr.loadbalancer.server.port=8545" \
+            alpine/socat \
+            TCP-LISTEN:8545,fork,reuseaddr "TCP:host.docker.internal:$EXPOSED_RPC_PORT" \
+            || echo "WARNING: rpc-proxy failed to start (coolify network may not exist or alpine/socat unavailable)"
     else
         echo "WARNING: could not determine Kurtosis ws-rpc port — devnet not proxied"
         echo "── Enclave services:"
