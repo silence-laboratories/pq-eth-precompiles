@@ -66,7 +66,7 @@ http:
         permanent: true
   routers:
     pq-devnet-https:
-      rule: "Host(`ynd5qiiwxt4l1xcshlli1qxr.demo.silencelaboratories.com`)"
+      rule: "Host(`pq-precompiles-devnet.demo.silencelaboratories.com`)"
       entryPoints: [https]
       service: pq-devnet
       tls:
@@ -74,7 +74,7 @@ http:
       middlewares: [pq-gzip]
       priority: 200
     pq-devnet-http:
-      rule: "Host(`ynd5qiiwxt4l1xcshlli1qxr.demo.silencelaboratories.com`)"
+      rule: "Host(`pq-precompiles-devnet.demo.silencelaboratories.com`)"
       entryPoints: [http]
       service: pq-devnet
       middlewares: [pq-redirect-to-https]
