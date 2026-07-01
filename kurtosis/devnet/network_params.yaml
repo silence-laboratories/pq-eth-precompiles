@@ -2,7 +2,7 @@ participants:
   - el_type: erigon
     el_image: erigon-ntt:latest
     cl_type: lighthouse
-    cl_image: sigp/lighthouse:latest
+    cl_image: sigp/lighthouse:v7.3.0
     count: 1
     supernode: true
 
