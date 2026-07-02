@@ -109,9 +109,9 @@ if docker image inspect erigon-ntt:latest >/dev/null 2>&1; then
                 -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' || true
             echo
             echo "── [periodic] cl-1-lighthouse-erigon logs (tail 40):"
-            kurtosis service logs falcon-devnet cl-1-lighthouse-erigon --tail 40 2>&1 || true
+            kurtosis service logs falcon-devnet cl-1-lighthouse-erigon 2>&1 | tail -n 40 || true
             echo "── [periodic] vc-1-erigon-lighthouse logs (tail 20):"
-            kurtosis service logs falcon-devnet vc-1-erigon-lighthouse --tail 20 2>&1 || true
+            kurtosis service logs falcon-devnet vc-1-erigon-lighthouse 2>&1 | tail -n 20 || true
         done
     ) &
 fi
