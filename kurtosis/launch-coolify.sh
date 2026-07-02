@@ -26,7 +26,11 @@ fi
 if docker image inspect erigon-ntt:latest >/dev/null 2>&1; then
     echo "── Launching Kurtosis devnet (falcon-devnet)..."
     kurtosis enclave rm -f falcon-devnet 2>/dev/null || true
-    kurtosis run --enclave falcon-devnet github.com/ethpandaops/ethereum-package \
+    # @6.0.0 is the newest version before zkboost/GpuConfig was added (breaks
+    # on every current Kurtosis CLI release) and pins ethereum-genesis-generator
+    # 5.2.2 (Dec 2025), well past the Electra minimal-preset fix that 4.0.4
+    # (pinned by @5.0.1) predates.
+    kurtosis run --enclave falcon-devnet github.com/ethpandaops/ethereum-package@6.0.0 \
         --args-file "$ARGS_FILE" || echo "WARNING: kurtosis run exited non-zero"
 
     # Port name in recent ethereum-package erigon launcher versions is "ws-rpc" (not "rpc")
