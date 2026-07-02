@@ -98,4 +98,22 @@ else
 fi
 
 echo "── Container alive for debugging. Check logs above for errors."
+
+if docker image inspect erigon-ntt:latest >/dev/null 2>&1; then
+    (
+        while true; do
+            sleep 60
+            echo "── [periodic] eth_blockNumber:"
+            curl -s -X POST "http://127.0.0.1:${EXPOSED_RPC_PORT}" \
+                -H "Content-Type: application/json" \
+                -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' || true
+            echo
+            echo "── [periodic] cl-1-lighthouse-erigon logs (tail 40):"
+            kurtosis service logs falcon-devnet cl-1-lighthouse-erigon --tail 40 2>&1 || true
+            echo "── [periodic] vc-1-erigon-lighthouse logs (tail 20):"
+            kurtosis service logs falcon-devnet vc-1-erigon-lighthouse --tail 20 2>&1 || true
+        done
+    ) &
+fi
+
 tail -f /dev/null
