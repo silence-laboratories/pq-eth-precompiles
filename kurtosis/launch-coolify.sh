@@ -26,10 +26,10 @@ fi
 if docker image inspect erigon-ntt:latest >/dev/null 2>&1; then
     echo "── Launching Kurtosis devnet (falcon-devnet)..."
     kurtosis enclave rm -f falcon-devnet 2>/dev/null || true
-    kurtosis run --enclave falcon-devnet github.com/ethpandaops/ethereum-package@5.0.1 \
+    kurtosis run --enclave falcon-devnet github.com/ethpandaops/ethereum-package \
         --args-file "$ARGS_FILE" || echo "WARNING: kurtosis run exited non-zero"
 
-    # Port name in ethereum-package 5.0.1 erigon launcher is "ws-rpc" (not "rpc")
+    # Port name in recent ethereum-package erigon launcher versions is "ws-rpc" (not "rpc")
     RPC_URL=$(kurtosis port print falcon-devnet el-1-erigon-lighthouse ws-rpc 2>/dev/null || true)
     KURTOSIS_PORT=$(echo "$RPC_URL" | grep -oE '[0-9]+$' || true)
 

@@ -13,8 +13,13 @@ RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /
     apt-get update && apt-get install -y docker-ce-cli && \
     rm -rf /var/lib/apt/lists/*
 
-# Kurtosis CLI via official apt repo
-RUN echo "deb [trusted=yes] https://apt.fury.io/kurtosis-tech/ /" > /etc/apt/sources.list.d/kurtosis.list && \
+# Kurtosis CLI via official apt repo. Cache-busted per deploy (via Coolify's
+# auto-injected COOLIFY_CONTAINER_NAME arg) so we always get the latest CLI,
+# since newer ethereum-package Starlark modules (e.g. zkboost's GpuConfig)
+# require SDK types that older Kurtosis CLI releases don't have.
+ARG COOLIFY_CONTAINER_NAME
+RUN echo "cache-bust: ${COOLIFY_CONTAINER_NAME}" && \
+    echo "deb [trusted=yes] https://apt.fury.io/kurtosis-tech/ /" > /etc/apt/sources.list.d/kurtosis.list && \
     apt-get update && apt-get install -y kurtosis-cli && \
     rm -rf /var/lib/apt/lists/* && \
     kurtosis version
