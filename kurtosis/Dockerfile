@@ -13,6 +13,12 @@ RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /
     apt-get update && apt-get install -y docker-ce-cli && \
     rm -rf /var/lib/apt/lists/*
 
+# Foundry `cast` (pinned) — used by scripts/deploy-demo-contracts.sh to
+# redeploy the demo contracts and fund the relayer after each fresh genesis.
+ARG FOUNDRY_VERSION=v1.7.1
+RUN curl -fsSL "https://github.com/foundry-rs/foundry/releases/download/${FOUNDRY_VERSION}/foundry_${FOUNDRY_VERSION}_linux_amd64.tar.gz" \
+    | tar -xz -C /usr/local/bin cast && cast --version
+
 # Kurtosis CLI via official apt repo. Cache-busted per deploy (via Coolify's
 # auto-injected COOLIFY_CONTAINER_NAME arg) so we always get the latest CLI,
 # since newer ethereum-package Starlark modules (e.g. zkboost's GpuConfig)
@@ -26,8 +32,9 @@ RUN echo "cache-bust: ${COOLIFY_CONTAINER_NAME}" && \
 
 COPY devnet /app/devnet
 COPY scripts /app/scripts
+COPY demo-contracts /app/demo-contracts
 COPY launch-coolify.sh /app/launch-coolify.sh
-RUN chmod +x /app/launch-coolify.sh
+RUN chmod +x /app/launch-coolify.sh /app/scripts/deploy-demo-contracts.sh
 
 WORKDIR /app
 

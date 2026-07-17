@@ -91,6 +91,11 @@ http:
 YAMLEOF
 echo "Traefik file config written."
 DOCKEREOF
+        # Fresh genesis wipes the demo contracts and relayer balance every
+        # redeploy — put them back automatically (waits for block production,
+        # idempotent, logs prefixed with [demo-deploy]).
+        echo "── Auto-deploying demo contracts + funding relayer (background)..."
+        /app/scripts/deploy-demo-contracts.sh &
     else
         echo "WARNING: could not determine Kurtosis ws-rpc port — devnet not proxied"
         echo "── Enclave services:"
